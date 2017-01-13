@@ -24,12 +24,16 @@ class TestContract(TestCase):
         wa_1 = 1
         wa_2 = 2
         wa_3 = 3
+        id_1 = 123456789
+        id_2 = 987654321
+        id_3 = 192837465
         constructor_parameters = (
             [accounts[wa_1], accounts[wa_2], accounts[wa_3]],
+            [id_1, id_2, id_3],
             required_accounts
         )
         self.multisig_wallet = self.s.abi_contract(
-            open('solidity/MultiSigWallet.sol').read(),
+            open('solidity/IdentifiedMultiSigWallet.sol').read(),
             language='solidity',
             constructor_parameters=constructor_parameters
         )

@@ -1,0 +1,38 @@
+[
+    {
+        "type": "deployment",
+        "file": "IdentifiedMultiSigWallet.sol",
+        "params": [
+            ["0xdceceaf3fc5c0a63d195d69b1a90011b7b19650d", "0x598443f1880ef585b21f1d7585bd0577402861e5"],
+            [123456789, 987654321],
+            2
+        ]
+    },
+    {
+        "type": "assertion",
+        "contract": "IdentifiedMultiSigWallet",
+        "name": "owners",
+        "params": [0],
+        "return": "dceceaf3fc5c0a63d195d69b1a90011b7b19650d"
+    },
+    {
+        "type": "assertion",
+        "contract": "IdentifiedMultiSigWallet",
+        "name": "owners",
+        "params": [1],
+        "return": "598443f1880ef585b21f1d7585bd0577402861e5"
+    },
+    {
+        "type": "assertion",
+        "contract": "IdentifiedMultiSigWallet",
+        "name": "required",
+        "return": 2
+    },
+    {
+        "type": "assertion",
+        "contract": "IdentifiedMultiSigWallet",
+        "name": "getId",
+        "params": ["dceceaf3fc5c0a63d195d69b1a90011b7b19650d"],
+        "return": 123456789
+    }
+]

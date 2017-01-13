@@ -1,10 +1,10 @@
-pragma solidity 0.4.4;
-import "MultiSigWallet.sol";
+pragma solidity ^0.4.4;
+import "IdentifiedMultiSigWallet.sol";
 
 
-/// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWalletWithDailyLimit is MultiSigWallet {
+/// @title Identified Multisignature wallet with daily limit - Allows an identified owner to withdraw a daily limit without multisig.
+/// @author Andreu Rodríguez i Donaire - <andreu@atraura.com>
+contract IdentifiedMultiSigWalletWithDailyLimit is IdentifiedMultiSigWallet {
 
     event DailyLimitChange(uint dailyLimit);
 
@@ -17,11 +17,12 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
      */
     /// @dev Contract constructor sets initial owners, required number of confirmations and daily withdraw limit.
     /// @param _owners List of initial owners.
+    /// @param _ids List of the ids of initial owners.
     /// @param _required Number of required confirmations.
     /// @param _dailyLimit Amount in wei, which can be withdrawn without confirmations on a daily basis.
-    function MultiSigWalletWithDailyLimit(address[] _owners, uint _required, uint _dailyLimit)
+    function IdentifiedMultiSigWalletWithDailyLimit(address[] _owners, uint[] _ids, uint _required, uint _dailyLimit)
         public
-        MultiSigWallet(_owners, _required)
+        IdentifiedMultiSigWallet(_owners, _ids, _required)
     {
         dailyLimit = _dailyLimit;
     }

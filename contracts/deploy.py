@@ -15,16 +15,16 @@ logging.basicConfig(level=logging.INFO)
 
 class Deploy:
 
-    def __init__(self, protocol, host, port, add_dev_code, verify_code, contract_dir, gas, gas_price, private_key):
+    def __init__(self, host, port, add_dev_code, verify_code, contract_dir, gas, gas_price, private_key):
         self.pp = PreProcessor()
         self.s = t.state()
         self.s.block.number = 1150000  # Homestead
         t.gas_limit = int(gas)
-        self.json_rpc = EthJsonRpc(protocol=protocol, host=host, port=port)
+        self.json_rpc = EthJsonRpc(host=host, port=port)
         if private_key:
             self.user_address = '0x' + privtoaddr(private_key.decode('hex')).encode('hex')
         else:
-            self.user_address = self.json_rpc.eth_coinbase()["result"]
+            self.user_address = self.json_rpc.eth_coinbase()
         self.add_dev_code = add_dev_code == 'true'
         self.verify_code = verify_code == 'true'
         self.contract_dir = contract_dir
@@ -35,7 +35,7 @@ class Deploy:
         self.contract_abis = {}
 
     def wait_for_transaction_receipt(self, transaction_hash):
-        while self.json_rpc.eth_getTransactionReceipt(transaction_hash)['result'] is None:
+        while self.json_rpc.eth_getTransactionReceipt(transaction_hash) is None:
             logging.info('Waiting for transaction receipt {}'.format(transaction_hash))
             time.sleep(5)
 
@@ -43,7 +43,7 @@ class Deploy:
         return self.contract_addresses[a] if isinstance(a, basestring) and a in self.contract_addresses else a
 
     def get_nonce(self):
-        return int(self.json_rpc.eth_getTransactionCount(self.user_address)["result"][2:], 16)
+        return int(self.json_rpc.eth_getTransactionCount(self.user_address)[2:], 16)
 
     def get_raw_transaction(self, data, contract_address=''):
         nonce = self.get_nonce()
@@ -52,7 +52,7 @@ class Deploy:
         return rlp.encode(tx).encode('hex')
 
     def code_is_valid(self, contract_address, compiled_code):
-        deployed_code = self.json_rpc.eth_getCode(contract_address)["result"]
+        deployed_code = self.json_rpc.eth_getCode(contract_address)
         locally_deployed_code_address = self.s.evm(compiled_code.decode("hex")).encode("hex")
         locally_deployed_code = self.s.block.get_code(locally_deployed_code_address).encode("hex")
         return deployed_code == "0x" + locally_deployed_code
@@ -60,7 +60,7 @@ class Deploy:
     @staticmethod
     def compile_code(code, language):
         combined = languages[language].combined(code)
-        compiled_code = combined[-1][1]["bin_hex"]
+        compiled_code = combined[-1][1]["bin"]
         abi = combined[-1][1]["abi"]
         return compiled_code, abi
 
@@ -105,9 +105,9 @@ class Deploy:
                 time.sleep(5)
                 tx_response = self.json_rpc.eth_sendTransaction(self.user_address, data=bytecode, gas=self.gas,
                                                                 gas_price=self.gas_price)
-        transaction_hash = tx_response['result']
+        transaction_hash = tx_response
         self.wait_for_transaction_receipt(transaction_hash)
-        contract_address = self.json_rpc.eth_getTransactionReceipt(transaction_hash)["result"]["contractAddress"]
+        contract_address = self.json_rpc.eth_getTransactionReceipt(transaction_hash)["contractAddress"]
         # Verify deployed code with locally deployed code
         if self.verify_code and not self.code_is_valid(contract_address, bytecode):
             logging.info('Deploy of {} failed. Retry!'.format(file_path))
@@ -138,7 +138,7 @@ class Deploy:
                 time.sleep(5)
                 tx_response = self.json_rpc.eth_sendTransaction(self.user_address, to_address=contract_address,
                                                                 data=data, gas=self.gas, gas_price=self.gas_price)
-        transaction_hash = tx_response['result']
+        transaction_hash = tx_response
         self.wait_for_transaction_receipt(transaction_hash)
         logging.info('Transaction {} for contract {} completed.'.format(name, contract))
 
@@ -149,7 +149,7 @@ class Deploy:
         translator = ContractTranslator(contract_abi)
         data = translator.encode(name, [self.replace_address(p) for p in params]).encode("hex")
         logging.info('Try to assert return value of {} in contract {}.'.format(name, contract))
-        bc_return_val = self.json_rpc.eth_call(to_address=contract_address, data=data)["result"]
+        bc_return_val = self.json_rpc.eth_call(to_address=contract_address, data=data)
         result_decoded = translator.decode(name, bc_return_val[2:].decode("hex"))
         result_decoded = result_decoded if len(result_decoded) > 1 else result_decoded[0]
         assert result_decoded == return_value
@@ -161,7 +161,7 @@ class Deploy:
             logging.info('Your address: {}'.format(self.user_address))
             for instruction in instructions:
                 logging.info('Your balance: {} Wei'.format(
-                    int(self.json_rpc.eth_getBalance(self.user_address)['result'], 16)))
+                    self.json_rpc.eth_getBalance(self.user_address)))
                 if instruction["type"] == "deployment":
                     self.deploy_code(
                         instruction["file"],
@@ -187,17 +187,16 @@ class Deploy:
 
 @click.command()
 @click.option('-f', help='File with instructions')
-@click.option('-protocol', default="http", help='Ethereum server protocol')
 @click.option('-host', default="localhost", help='Ethereum server host')
 @click.option('-port', default='8545', help='Ethereum server port')
 @click.option('-add_dev_code', default='false', help='Add admin methods')
 @click.option('-verify_code', default='false', help='Verify code deployments with test deployment')
 @click.option('-contract_dir', default='solidity/', help='Import directory')
-@click.option('-gas', default='4712388', help='Transaction gas')
+@click.option('-gas', default='4000000', help='Transaction gas')
 @click.option('-gas_price', default='50000000000', help='Transaction gas price')
 @click.option('-private_key', help='Private key as hex to sign transactions')
-def setup(f, protocol, host, port, add_dev_code, verify_code, contract_dir, gas, gas_price, private_key):
-    deploy = Deploy(protocol, host, port, add_dev_code, verify_code, contract_dir, gas, gas_price, private_key)
+def setup(f, host, port, add_dev_code, verify_code, contract_dir, gas, gas_price, private_key):
+    deploy = Deploy(host, port, add_dev_code, verify_code, contract_dir, gas, gas_price, private_key)
     deploy.process(f)
 
 if __name__ == '__main__':

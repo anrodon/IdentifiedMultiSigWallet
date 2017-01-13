@@ -1,10 +1,10 @@
-pragma solidity 0.4.4;
-import "MultiSigWallet.sol";
+pragma solidity ^0.4.4;
+import "IdentifiedMultiSigWallet.sol";
 
 
 /// @title Multisignature wallet with pre-sign functionality - Allows multiple parties to pre-sign transactions.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWalletWithPreSign is MultiSigWallet {
+/// @author Andreu Rodríguez i Donaire - <andreu@atraura.com>
+contract IdentifiedMultiSigWalletWithPreSign is IdentifiedMultiSigWallet {
 
     modifier signaturesFromOwners(bytes32 transactionHash, uint8[] v, bytes32[] rs) {
         for (uint i=0; i<v.length; i++)
@@ -15,10 +15,11 @@ contract MultiSigWalletWithPreSign is MultiSigWallet {
 
     /// @dev Contract constructor sets initial owners and required number of confirmations.
     /// @param _owners List of initial owners.
+    /// @param _ids List of the ids of initial owners.
     /// @param _required Number of required confirmations.
-    function MultiSigWalletWithPreSign(address[] _owners, uint _required)
+    function IdentifiedMultiSigWalletWithPreSign(address[] _owners, uint[] _ids, uint _required)
         public
-        MultiSigWallet(_owners, _required)
+        IdentifiedMultiSigWallet(_owners, _ids, _required)
     {
         // Nothing to do here
     }

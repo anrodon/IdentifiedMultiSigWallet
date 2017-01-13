@@ -1,11 +1,9 @@
-pragma solidity 0.4.4;
+pragma solidity ^0.4.4;
 
 
-/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWallet {
-
-    uint constant public MAX_OWNER_COUNT = 50;
+/// @title Identified Multisignature wallet - Allows multiple identified parties to agree on transactions before execution.
+/// @author Andreu Rodríguez i Donaire - <andreu@atraura.com>
+contract IdentifiedMultiSigWallet {
 
     event Confirmation(address sender, bytes32 transactionHash);
     event Revocation(address sender, bytes32 transactionHash);
@@ -22,6 +20,7 @@ contract MultiSigWallet {
     mapping (bytes32 => uint) public nonces;
     mapping (address => bool) public isOwner;
     address[] public owners;
+    uint[] public ids;
     bytes32[] public transactionHashes;
     uint public required;
 
@@ -82,8 +81,7 @@ contract MultiSigWallet {
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        if (   ownerCount > MAX_OWNER_COUNT
-            || _required > ownerCount
+        if (_required > ownerCount
             || _required == 0
             || ownerCount == 0)
             throw;
@@ -101,25 +99,28 @@ contract MultiSigWallet {
     /*
      * Public functions
      */
-    /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
-        public
-        validRequirement(_owners.length, _required)
-    {
-        for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]])
-                throw;
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
-    }
+     /// @dev Contract constructor sets initial owners and required number of confirmations.
+     /// @param _owners List of initial owners.
+     /// @param _ids List of the ids of initial owners.
+     /// @param _required Number of required confirmations.
+     function IdentifiedMultiSigWallet(address[] _owners, uint[] _ids, uint _required)
+         public
+         validRequirement(_owners.length, _required)
+     {
+         for (uint i=0; i<_owners.length; i++) {
+             if (isOwner[_owners[i]])
+                 throw;
+             isOwner[_owners[i]] = true;
+         }
+         owners = _owners;
+         ids = _ids;
+         required = _required;
+     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of new owner.
-    function addOwner(address owner)
+    /// @param id Id of new owner.
+    function addOwner(address owner, uint id)
         public
         onlyWallet
         ownerDoesNotExist(owner)
@@ -127,6 +128,7 @@ contract MultiSigWallet {
     {
         isOwner[owner] = true;
         owners.push(owner);
+        ids.push(id);
         OwnerAddition(owner);
     }
 
@@ -141,9 +143,11 @@ contract MultiSigWallet {
         for (uint i=0; i<owners.length - 1; i++)
             if (owners[i] == owner) {
                 owners[i] = owners[owners.length - 1];
+                ids[i] = ids[ids.length - 1];
                 break;
             }
         owners.length -= 1;
+        ids.length -= 1;
         if (required > owners.length)
             changeRequirement(owners.length);
         OwnerRemoval(owner);
@@ -373,5 +377,19 @@ contract MultiSigWallet {
         _transactionHashes = new bytes32[](to - from);
         for (i=from; i<to; i++)
             _transactionHashes[i - from] = transactionHashesTemp[i];
+    }
+
+    /// @dev Returns the id of a given owner address.
+    /// @param _address Address of the owner.
+    /// @return Id of the owner.
+    function getId(address _address)
+        external
+        constant
+        returns (uint _id)
+    {
+        for (uint i=0; i<owners.length - 1; i++)
+          if (owners[i] == _address)
+              return ids[i];
+        throw;
     }
 }

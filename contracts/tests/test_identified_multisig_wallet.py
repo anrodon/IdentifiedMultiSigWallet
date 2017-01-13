@@ -9,7 +9,7 @@ from unittest import TestCase
 
 class TestContract(TestCase):
     """
-    run test with python -m unittest tests.test_multisig_wallet
+    run test with python -m unittest tests.test_identified_multisig_wallet
     """
 
     HOMESTEAD_BLOCK = 1150000
@@ -27,22 +27,27 @@ class TestContract(TestCase):
         wa_1 = 1
         wa_2 = 2
         wa_3 = 3
+        id_1 = 123456789
+        id_2 = 987654321
+        id_3 = 192837465
         constructor_parameters = (
             [accounts[wa_1], accounts[wa_1]],
+            [id_1, id_2],
             required_accounts
         )
         self.assertRaises(ContractCreationFailed,
                           self.s.abi_contract,
-                          self.pp.process('MultiSigWallet.sol', contract_dir='solidity/', add_dev_code=True),
+                          self.pp.process('IdentifiedMultiSigWallet.sol', contract_dir='solidity/', add_dev_code=True),
                           language='solidity',
                           constructor_parameters=constructor_parameters)
         constructor_parameters = (
             [accounts[wa_1], accounts[wa_2], accounts[wa_3]],
+            [id_1, id_2, id_3],
             required_accounts
         )
         gas = self.s.block.gas_used
         self.multisig_wallet = self.s.abi_contract(
-            self.pp.process('MultiSigWallet.sol', contract_dir='solidity/', add_dev_code=True),
+            self.pp.process('IdentifiedMultiSigWallet.sol', contract_dir='solidity/', add_dev_code=True),
             language='solidity',
             constructor_parameters=constructor_parameters
         )
@@ -58,6 +63,10 @@ class TestContract(TestCase):
         self.assertEqual(self.multisig_wallet.getOwners(),
                          [accounts[wa_1].encode('hex'), accounts[wa_2].encode('hex'), accounts[wa_3].encode('hex')])
         self.assertEqual(self.multisig_wallet.required(), required_accounts)
+        self.assertEqual(self.multisig_wallet.getId(accounts[wa_1].encode('hex')), id_1)
+        self.assertEqual(self.multisig_wallet.getId(accounts[wa_2].encode('hex')), id_2)
+        self.assertEqual(self.multisig_wallet.getId(accounts[wa_3].encode('hex')), id_3)
+
         # Create ABIs
         multisig_abi = self.multisig_wallet.translator
         # Send money to wallet contract
@@ -66,7 +75,8 @@ class TestContract(TestCase):
         self.assertEqual(self.s.block.get_balance(self.multisig_wallet.address), 1000)
         # Add owner wa_4
         wa_4 = 4
-        add_owner_data = multisig_abi.encode('addOwner', [accounts[wa_4]])
+        id_4 = 918273645
+        add_owner_data = multisig_abi.encode("addOwner", [accounts[wa_4]], [id_4])
         # A third party cannot submit transactions.
         nonce = self.multisig_wallet.getNonce(self.multisig_wallet.address, 0, add_owner_data)
         self.assertRaises(TransactionFailed, self.multisig_wallet.submitTransaction, self.multisig_wallet.address, 0,

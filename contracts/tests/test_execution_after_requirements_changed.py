@@ -9,7 +9,7 @@ from unittest import TestCase
 
 class TestContract(TestCase):
     """
-    run test with python -m unittest tests.test_execution_after_requirements_changed
+    run test with python -m unittest tests.test_identified_execution_after_requirements_changed
     """
 
     HOMESTEAD_BLOCK = 1150000
@@ -27,12 +27,16 @@ class TestContract(TestCase):
         wa_1 = 1
         wa_2 = 2
         wa_3 = 3
+        id_1 = 123456789
+        id_2 = 987654321
+        id_3 = 192837465
         constructor_parameters = (
             [accounts[wa_1], accounts[wa_2], accounts[wa_3]],
+            [id_1, id_2, id_3],
             required_accounts
         )
         self.multisig_wallet = self.s.abi_contract(
-            self.pp.process('MultiSigWallet.sol', contract_dir='solidity/', add_dev_code=True),
+            self.pp.process('IdentifiedMultiSigWallet.sol', contract_dir='solidity/', add_dev_code=True),
             language='solidity',
             constructor_parameters=constructor_parameters
         )

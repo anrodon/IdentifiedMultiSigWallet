@@ -27,16 +27,19 @@ class TestContract(TestCase):
         daily_limit = 2000
         wa_1 = 1
         wa_2 = 2
+        id_1 = 123456789
+        id_2 = 987654321
         constructor_parameters = (
             [accounts[wa_1], accounts[wa_2]],
+            [id_1, id_2],
             required_accounts,
             daily_limit
         )
         self.multisig_wallet = self.s.abi_contract(
-            self.pp.process('MultiSigWalletWithDailyLimit.sol', contract_dir='solidity/', add_dev_code=True),
+            self.pp.process('IdentifiedMultiSigWalletWithDailyLimit.sol', contract_dir='solidity/', add_dev_code=True),
             language='solidity',
             constructor_parameters=constructor_parameters,
-            contract_name="MultiSigWalletWithDailyLimit"
+            contract_name="IdentifiedMultiSigWalletWithDailyLimit"
         )
         # Send money to wallet contract
         deposit = 10000

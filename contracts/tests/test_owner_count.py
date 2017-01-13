@@ -22,24 +22,23 @@ class TestContract(TestCase):
     def test(self):
         # Create 50 accounts
         accounts = []
+        ids = []
         keys = []
         account_count = 50
         for i in range(account_count):
             keys.append(sha3(to_string(i)))
             accounts.append(privtoaddr(keys[-1]))
+            ids.append(i);
             self.s.block.set_balance(accounts[-1], 10**18)
         # Create wallet
         required_accounts = account_count
         constructor_parameters = (
             accounts,
+            ids,
             required_accounts
         )
-        # Try to create contract with 51 owners fails
-        self.assertRaises(ContractCreationFailed, self.s.abi_contract,
-                          open('solidity/MultiSigWallet.sol').read(),
-                          language='solidity', constructor_parameters=(accounts + accounts[:1], required_accounts))
         self.multisig_wallet = self.s.abi_contract(
-            open('solidity/MultiSigWallet.sol').read(),
+            open('solidity/IdentifiedMultiSigWallet.sol').read(),
             language='solidity',
             constructor_parameters=constructor_parameters
         )
