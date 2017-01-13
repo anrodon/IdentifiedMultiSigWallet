@@ -1,13 +1,13 @@
-Multisignature Wallet
+IdentifiedMultisignature Wallet
 ===================
 
-Allows multiple parties to agree on transactions before execution. Allows to add and remove owners and update the number of required confirmations.
+Allows multiple identified parties to agree on transactions before execution. Allows to add and remove owners and update the number of required confirmations.
 
 Install
 -------------
 ```
-git clone https://github.com/ConsenSys/MultiSigWallet.git
-cd MultiSigWallet
+git clone https://github.com/anrodon/IdentifiedMultiSigWallet.git
+cd IdentifiedMultiSigWallet
 vagrant up
 ```
 
@@ -16,7 +16,7 @@ Test
 ### Run single test:
 ```
 cd /vagrant/contracts/
-python -m unittest tests.test_multisig_wallet
+python -m unittest tests.test_identified_multisig_wallet
 ```
 ### Run all tests:
 ```
@@ -27,10 +27,10 @@ python -m unittest discover tests
 Deploy
 -------------
 **Remember to change owner addresses in the respective JSON file before deployment!**
-### Deploy multisig wallet:
+### Deploy identified multisig wallet:
 ```
 cd /vagrant/contracts/
-python deploy.py -f deploy/MultiSig.json
+python deploy.py -f deploy/IdentifiedMultiSig.json
 ```
 ### Deploy multisig wallet with daily limit:
 ```
@@ -52,10 +52,9 @@ Security
 -------------
 All contracts are WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-Reviewers
+Acknowledgment of authorship
 -------------
-The following people have reviewed the code at the time of the linked commit:
-- Stefan George ([Georgi87](https://github.com/Georgi87)): [62247de24b979ab0d055768589784cb275a07afe](https://github.com/ConsenSys/MultiSigWallet/tree/62247de24b979ab0d055768589784cb275a07afe)
+Some code in this repository was written by [ConsenSys](https://github.com/ConsenSys). This repository is a fork of the [ConsenSys MultiSignature Wallet](https://github.com/ConsenSys/MultiSigWallet).
 
 License
 -------------

@@ -8,7 +8,7 @@ if ! which eth | grep -q /usr/bin/eth || ! which solc | grep -q /usr/bin/solc; t
     DEBIAN_FRONTEND=noninteractive sudo add-apt-repository -y ppa:ethereum/ethereum-dev
     DEBIAN_FRONTEND=noninteractive sudo apt-get update
 fi
-DEBIAN_FRONTEND=noninteractive sudo apt-get install solc=1:0.4.4-0ubuntu1~trusty
+DEBIAN_FRONTEND=noninteractive sudo apt-get install -y solc
 
 SCRIPT
 
@@ -27,7 +27,7 @@ SCRIPT
 
 $pyenv = <<SCRIPT
 if [ ! -d ~/.pyenv ]; then
-    pip install --egg pyenv
+    sudo pip install --egg pyenv
 else
     . ~/.bash_profile
     pyenv update
@@ -52,8 +52,8 @@ pyenv global 2.7.9
 SCRIPT
 
 $requirements = <<SCRIPT
-pip install --upgrade pip
-pip install -r /vagrant/requirements.txt
+sudo pip install --upgrade pip
+sudo pip install -r /vagrant/requirements.txt
 SCRIPT
 
 $node_dependencies = <<SCRIPT
@@ -72,6 +72,8 @@ Vagrant.configure(2) do |config|
 
   config.ssh.forward_agent = true
   config.vm.network :forwarded_port, host: 8545, guest: 8545
+  config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
+
 
   config.vm.provision "shell", inline: $dependencies
   config.vm.provision "shell", inline: $ethereumcpp
