@@ -1,6 +1,5 @@
 pragma solidity ^0.4.4;
 
-
 /// @title Identified Multisignature wallet - Allows multiple identified parties to agree on transactions before execution.
 /// @author Andreu Rodríguez i Donaire - <andreu@atraura.com>
 contract IdentifiedMultiSigWallet {
@@ -19,6 +18,7 @@ contract IdentifiedMultiSigWallet {
     mapping (bytes32 => mapping (address => bool)) public confirmations;
     mapping (bytes32 => uint) public nonces;
     mapping (address => bool) public isOwner;
+    mapping (uint => address) public ownerWithId;
     address[] public owners;
     uint[] public ids;
     bytes32[] public transactionHashes;
@@ -38,8 +38,10 @@ contract IdentifiedMultiSigWallet {
         _;
     }
 
-    modifier ownerDoesNotExist(address owner) {
+    modifier ownerDoesNotExist(address owner, uint id) {
         if (isOwner[owner])
+            throw;
+        if (ownerWithId[id] != address(0))
             throw;
         _;
     }
@@ -112,6 +114,11 @@ contract IdentifiedMultiSigWallet {
                  throw;
              isOwner[_owners[i]] = true;
          }
+         for (uint j=0; j<_ids.length; j++) {
+             if (ownerWithId[_ids[j]] != 0)
+                 throw;
+             ownerWithId[_ids[j]] = _owners[j];
+         }
          owners = _owners;
          ids = _ids;
          required = _required;
@@ -123,10 +130,11 @@ contract IdentifiedMultiSigWallet {
     function addOwner(address owner, uint id)
         public
         onlyWallet
-        ownerDoesNotExist(owner)
+        ownerDoesNotExist(owner, id)
         validRequirement(owners.length + 1, required)
     {
         isOwner[owner] = true;
+        ownerWithId[id] = owner;
         owners.push(owner);
         ids.push(id);
         OwnerAddition(owner);
@@ -382,14 +390,12 @@ contract IdentifiedMultiSigWallet {
     /// @dev Returns the id of a given owner address.
     /// @param _address Address of the owner.
     /// @return Id of the owner.
-    function getId(address _address)
+    function idOf(address _address)
         external
         constant
         returns (uint _id)
     {
-        for (uint i=0; i<owners.length - 1; i++)
-          if (owners[i] == _address)
-              return ids[i];
-        throw;
+        for(uint i = 0; i < ids.length; ++i)
+          if (ownerWithId[ids[i]] == _address) return ids[i];
     }
 }

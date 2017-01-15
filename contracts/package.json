@@ -1,0 +1,37 @@
+{
+  "name": "identified-multisig-wallet",
+  "version": "0.1.0",
+  "description": "Allows multiple identified parties to agree on transactions before execution.",
+  "main": "generateAbi.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "async": "^2.1.4",
+    "chai-as-promised": "^6.0.0",
+    "solc": "^0.4.8",
+    "web3": "^0.18.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0"
+  },
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anrodon/IdentifiedMultiSigWallet.git"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "wallet",
+    "multisig"
+  ],
+  "author": "@anrodon",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/anrodon/IdentifiedMultiSigWallet/issues"
+  },
+  "homepage": "https://github.com/anrodon/IdentifiedMultiSigWallet#readme"
+}

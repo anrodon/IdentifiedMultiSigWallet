@@ -13,34 +13,10 @@ vagrant up
 
 Test
 -------------
-### Run single test:
+### Run tests:
 ```
-cd /vagrant/contracts/
-python -m unittest tests.test_identified_multisig_wallet
-```
-### Run all tests:
-```
-cd /vagrant/contracts/
-python -m unittest discover tests
-```
-
-Deploy
--------------
-**Remember to change owner addresses in the respective JSON file before deployment!**
-### Deploy identified multisig wallet:
-```
-cd /vagrant/contracts/
-python deploy.py -f deploy/IdentifiedMultiSig.json
-```
-### Deploy multisig wallet with daily limit:
-```
-cd /vagrant/contracts/
-python deploy.py -f deploy/MultiSigWithDailyLimit.json
-```
-### Deploy multisig wallet with pre-signed transactions:
-```
-cd /vagrant/contracts/
-python deploy.py -f deploy/MultiSigWithPreSign.json
+cd /contracts/
+mocha tests --recursive --watch
 ```
 
 Limitations

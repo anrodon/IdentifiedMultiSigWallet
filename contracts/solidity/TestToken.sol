@@ -1,5 +1,4 @@
-pragma solidity 0.4.4;
-
+pragma solidity ^0.4.4;
 
 /// @title Test token contract - Allows testing of token transfers with multisig wallet.
 contract TestToken {
