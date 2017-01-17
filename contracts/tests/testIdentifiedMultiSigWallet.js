@@ -181,22 +181,12 @@ async.series([
         expect(parseInt(identifiedMultiSigWallet.required().toString())).to.equal(required_accounts);
       });
     });
-    describe('Sending Money:', function() {
-      it('Money is sent succesfully', function() {
-        web3.eth.sendTransaction({
-          from: accounts[wa_1],
-          to: identifiedMultiSigWallet.address,
-          value: web3.toWei(1),
-          gas: '3000000'
-        });
-        expect(parseInt(web3.eth.getBalance(identifiedMultiSigWallet.address).toString())).to.equal(parseInt(web3.toWei(1)));
-      });
-    });
     describe('Sending Transactions:', function() {
       it('A third party should not be able to submit transactions', function(done) {
         let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
+        let nonce = identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData);
         expect(function() {
-          identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, 0, {
+          identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, parsenonce, {
           from: accounts[0],
           to: identifiedMultiSigWallet.address,
           gas: '3000000'
@@ -206,43 +196,46 @@ async.series([
       });
       it('A third party should not be able to confirm transactions', function(done) {
         let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
-        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, 0, {
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
+        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, nonce, {
           from: accounts[wa_1],
           to: identifiedMultiSigWallet.address,
           gas: '3000000'
         }, function(e, txHash) {
-            expect(function() {
-              identifiedMultiSigWallet.confirmTransaction(identifiedMultiSigWallet.transactionHashes(0),{
-                from: accounts[0],
-                to: identifiedMultiSigWallet.address,
-                gas: '3000000'
-              });
-            }).to.throw(Error);
-            done();
-          }
-        );
+          let hash = identifiedMultiSigWallet.transactionHashes(0);
+          expect(function() {
+            identifiedMultiSigWallet.confirmTransaction(hash,{
+              from: accounts[0],
+              to: identifiedMultiSigWallet.address,
+              gas: '3000000'
+            });
+          }).to.throw(Error);
+          done();
+        });
       });
       it('A third party should not be able to revoke confirmations', function(done) {
         let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
-        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, 0, {
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
+        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, nonce, {
           from: accounts[wa_1],
           to: identifiedMultiSigWallet.address,
           gas: '3000000'
         }, function(e, txHash) {
-            expect(function() {
-              identifiedMultiSigWallet.revokeConfirmation(identifiedMultiSigWallet.transactionHashes(0),{
-                from: accounts[0],
-                to: identifiedMultiSigWallet.address,
-                gas: '3000000'
-              });
-            }).to.throw(Error);
-            done();
-          }
-        );
+          let hash = identifiedMultiSigWallet.transactionHashes(0);
+          expect(function() {
+            identifiedMultiSigWallet.revokeConfirmation(hash,{
+              from: accounts[0],
+              to: identifiedMultiSigWallet.address,
+              gas: '3000000'
+            });
+          }).to.throw(Error);
+          done();
+        });
       });
       it('An owner should be able to reconfirm a transaction.', function(done) {
         let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
-        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, 0, {
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
+        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, nonce, {
           from: accounts[wa_1],
           to: identifiedMultiSigWallet.address,
           gas: '3000000'
@@ -267,8 +260,21 @@ async.series([
       });
       it('Address 0 should not be able to receive transactions', function(done) {
         let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
         expect(function() {
-          identifiedMultiSigWallet.submitTransaction(0, 0, transactionData, 0, {
+          identifiedMultiSigWallet.submitTransaction(0, 0, transactionData, nonce, {
+            from: accounts[wa_1],
+            to: identifiedMultiSigWallet.address,
+            gas: '3000000'
+          });
+        }).to.throw(Error);
+        done();
+      });
+      it('Submit with wrong nonce should fail', function(done) {
+        let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
+        expect(function() {
+          identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet, 0, transactionData, nonce + 1, {
             from: accounts[wa_1],
             to: identifiedMultiSigWallet.address,
             gas: '3000000'
@@ -278,24 +284,55 @@ async.series([
       });
       it(accounts[wa_4] + ' should be added successfully as an owner with id ' + id_4, function(done) {
         let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
-        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, 0, {
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
+        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, nonce, {
           from: accounts[wa_1],
           to: identifiedMultiSigWallet.address,
           gas: '3000000'
         }, function(e, txHash) {
-            identifiedMultiSigWallet.confirmTransaction(identifiedMultiSigWallet.transactionHashes(0),{
-              from: accounts[wa_2],
-              to: identifiedMultiSigWallet.address,
-              gas: '3000000'
-            }, function(e, txHash) {
-              expect(identifiedMultiSigWallet.isOwner(accounts[wa_4])).to.equal(true);
-              expect(identifiedMultiSigWallet.ownerWithId(id_4)).to.equal(accounts[wa_4]);
-              expect(identifiedMultiSigWallet.owners(3)).to.equal(accounts[wa_4]);
-              expect(parseInt(identifiedMultiSigWallet.ids(3).toString())).to.equal(id_4);
-              done();
-            });
-          }
-        );
+          let hash = identifiedMultiSigWallet.transactionHashes(0);
+          identifiedMultiSigWallet.confirmTransaction(hash,{
+            from: accounts[wa_2],
+            to: identifiedMultiSigWallet.address,
+            gas: '3000000'
+          }, function(e, txHash) {
+            expect(identifiedMultiSigWallet.transactions(identifiedMultiSigWallet.transactionHashes(0))[4]).to.equal(true);
+            expect(identifiedMultiSigWallet.isOwner(accounts[wa_4])).to.equal(true);
+            expect(identifiedMultiSigWallet.ownerWithId(id_4)).to.equal(accounts[wa_4]);
+            expect(identifiedMultiSigWallet.owners(3)).to.equal(accounts[wa_4]);
+            expect(parseInt(identifiedMultiSigWallet.ids(3).toString())).to.equal(id_4);
+            done();
+          });
+        });
+      });
+      var excludePending = false;
+      var includePending = true;
+      var excludeExecuted = false;
+      var includeExecuted = true;
+      it('Slicing should be successfully done', function(done) {
+        expect(identifiedMultiSigWallet.getTransactionHashes(0, 1, includePending, includeExecuted)[0]).to.equal(identifiedMultiSigWallet.transactionHashes(0));
+        expect(identifiedMultiSigWallet.getTransactionHashes(0, 2, includePending, includeExecuted)[0]).to.equal(identifiedMultiSigWallet.transactionHashes(0), identifiedMultiSigWallet.transactionHashes(1));
+        expect(identifiedMultiSigWallet.getTransactionHashes(1, 2, includePending, includeExecuted)[0]).to.equal(identifiedMultiSigWallet.transactionHashes(1));
+        done();
+      });
+      it('Change requirement should be successfully done', function(done) {
+        let transactionData = identifiedMultiSigWallet.changeRequirement.getData(3);
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
+        identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, nonce, {
+          from: accounts[wa_1],
+          to: identifiedMultiSigWallet.address,
+          gas: '3000000'
+        }, function(e, txHash) {
+          let hash = identifiedMultiSigWallet.getTransactionHashes(0, identifiedMultiSigWallet.getTransactionCount(includePending, includeExecuted), includePending, excludeExecuted)[3];
+          identifiedMultiSigWallet.confirmTransaction(hash,{
+            from: accounts[wa_2],
+            to: identifiedMultiSigWallet.address,
+            gas: '3000000'
+          }, function(e, res) {
+            expect(parseInt(identifiedMultiSigWallet.required().toString())).to.equal(3);
+            done();
+          });
+        });
       });
     });
   }

@@ -148,9 +148,10 @@ contract IdentifiedMultiSigWallet {
         ownerExists(owner)
     {
         isOwner[owner] = false;
-        for (uint i=0; i<owners.length - 1; i++)
+        for (uint i=0; i<owners.length; i++)
             if (owners[i] == owner) {
                 owners[i] = owners[owners.length - 1];
+                delete ownerWithId[ids[i]];
                 ids[i] = ids[ids.length - 1];
                 break;
             }
