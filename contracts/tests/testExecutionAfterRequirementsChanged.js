@@ -18,12 +18,11 @@ var id_4 = 918273645;
 var required_accounts = 2;
 var accounts = web3.eth.accounts;
 
+var identifiedMultiSigWallet;
 var excludePending = false;
 var includePending = true;
 var excludeExecuted = false;
 var includeExecuted = true;
-
-var identifiedMultiSigWallet;
 async.series([
   function(callback) {
     describe('Deploy identifiedMultiSigWallet.', function() {
@@ -62,46 +61,49 @@ async.series([
           gas: '3000000'
         });
         expect(parseInt(web3.eth.getBalance(identifiedMultiSigWallet.address).toString())).to.equal(parseInt(web3.toWei(1)));
-      });
-      it('Money should be sent succesfully from the wallet', function() {
-        let nonce = identifiedMultiSigWallet.getNonce(accounts[0], web3.toWei(1), "");
-        identifiedMultiSigWallet.submitTransaction(accounts[0], web3.toWei(1), "", nonce, {
-          from: accounts[wa_1],
-          to: identifiedMultiSigWallet.address,
-          value: 0,
-          gas: '3000000'
-        }, function(e, txHash) {
-          let hash = identifiedMultiSigWallet.getTransactionHashes(0, identifiedMultiSigWallet.getTransactionCount(includePending, includeExecuted), includePending, excludeExecuted)[0];
-          identifiedMultiSigWallet.confirmTransaction(hash,{
-            from: accounts[wa_2],
-            to: identifiedMultiSigWallet.address,
-            gas: '3000000'
-          }, function(e, res) {
-            expect(parseInt(web3.eth.getBalance(identifiedMultiSigWallet.address).toString())).to.equal(0);
-          });
-        });
+        callback();
       });
     });
-    describe('Removing owners', function() {
-      it(accounts[wa_3] + ' should be removed as owner', function() {
-        let nonce = identifiedMultiSigWallet.getNonce(accounts[wa_3]);
-        let transactionData = identifiedMultiSigWallet.removeOwner.getData(accounts[wa_3]);
+  },
+  function(callback) {
+    describe('Sending Transactions with requirement changes:', function() {
+      it(accounts[wa_4] + ' should be added successfully as an owner with id ' + id_4 + ' after changing requirement', function(done) {
+        let transactionData = identifiedMultiSigWallet.addOwner.getData(accounts[wa_4], id_4);
+        let nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
         identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, nonce, {
           from: accounts[wa_1],
           to: identifiedMultiSigWallet.address,
-          value: 0,
           gas: '3000000'
         }, function(e, txHash) {
-          let hash = identifiedMultiSigWallet.getTransactionHashes(0, identifiedMultiSigWallet.getTransactionCount(includePending, includeExecuted), includePending, excludeExecuted)[0];
-          identifiedMultiSigWallet.confirmTransaction(hash,{
-            from: accounts[wa_2],
+          expect(parseInt(identifiedMultiSigWallet.getTransactionHashes(0, identifiedMultiSigWallet.getTransactionCount(includePending, includeExecuted), includePending, excludeExecuted)[0].toString())).to.not.equal(0);
+          transactionData = identifiedMultiSigWallet.changeRequirement.getData(1);
+          nonce = parseInt(identifiedMultiSigWallet.getNonce(identifiedMultiSigWallet.address, 0, transactionData).toString());
+          identifiedMultiSigWallet.submitTransaction(identifiedMultiSigWallet.address, 0, transactionData, nonce, {
+            from: accounts[wa_1],
             to: identifiedMultiSigWallet.address,
             gas: '3000000'
-          }, function(e, res) {
-            expect(identifiedMultiSigWallet.isOwner(accounts[wa_3])).to.equal(false);
-            expect(parseInt(identifiedMultiSigWallet.ownerWithId(id_3))).to.equal(0);
-            expect(identifiedMultiSigWallet.ids(accounts[wa_3])).to.throw(Error);
-            done();
+          }, function(e, txHash) {
+            let hash = identifiedMultiSigWallet.transactionHashes(1);
+            identifiedMultiSigWallet.confirmTransaction(hash,{
+              from: accounts[wa_2],
+              to: identifiedMultiSigWallet.address,
+              gas: '3000000'
+            }, function(e, txHash) {
+              hash = identifiedMultiSigWallet.transactionHashes(0);
+              identifiedMultiSigWallet.executeTransaction(hash,{
+                from: accounts[wa_2],
+                to: identifiedMultiSigWallet.address,
+                gas: '3000000'
+              }, function(e, txHash) {
+                expect(parseInt(identifiedMultiSigWallet.required().toString())).to.equal(1);
+                expect(identifiedMultiSigWallet.transactions(identifiedMultiSigWallet.transactionHashes(0))[4]).to.equal(true);
+                expect(identifiedMultiSigWallet.isOwner(accounts[wa_4])).to.equal(true);
+                expect(identifiedMultiSigWallet.ownerWithId(id_4)).to.equal(accounts[wa_4]);
+                expect(identifiedMultiSigWallet.owners(3)).to.equal(accounts[wa_4]);
+                expect(parseInt(identifiedMultiSigWallet.ids(3).toString())).to.equal(id_4);
+                done();
+              });
+            });
           });
         });
       });
